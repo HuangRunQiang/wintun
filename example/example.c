@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright (C) 2018-2021 WireGuard LLC. All Rights Reserved.
+ * 版权所有 (C) 2018-2021 WireGuard LLC。保留所有权利。
  */
 
 #include <winsock2.h>
@@ -154,7 +154,7 @@ CtrlHandler(_In_ DWORD CtrlType)
     case CTRL_CLOSE_EVENT:
     case CTRL_LOGOFF_EVENT:
     case CTRL_SHUTDOWN_EVENT:
-        Log(WINTUN_LOG_INFO, L"Cleaning up and shutting down...");
+        Log(WINTUN_LOG_INFO, L"正在清理并关闭...");
         HaveQuit = TRUE;
         SetEvent(QuitEvent);
         return TRUE;
@@ -167,7 +167,7 @@ PrintPacket(_In_ const BYTE *Packet, _In_ DWORD PacketSize)
 {
     if (PacketSize < 20)
     {
-        Log(WINTUN_LOG_INFO, L"Received packet without room for an IP header");
+        Log(WINTUN_LOG_INFO, L"接收到没有足够空间存放 IP 头部的数据包");
         return;
     }
     BYTE IpVersion = Packet[0] >> 4, Proto;
@@ -181,7 +181,7 @@ PrintPacket(_In_ const BYTE *Packet, _In_ DWORD PacketSize)
     }
     else if (IpVersion == 6 && PacketSize < 40)
     {
-        Log(WINTUN_LOG_INFO, L"Received packet without room for an IP header");
+        Log(WINTUN_LOG_INFO, L"接收到没有足够空间存放 IP 头部的数据包");
         return;
     }
     else if (IpVersion == 6)
@@ -193,13 +193,13 @@ PrintPacket(_In_ const BYTE *Packet, _In_ DWORD PacketSize)
     }
     else
     {
-        Log(WINTUN_LOG_INFO, L"Received packet that was not IP");
+        Log(WINTUN_LOG_INFO, L"接收到非 IP 数据包");
         return;
     }
     if (Proto == 1 && PacketSize >= 8 && Packet[0] == 0)
-        Log(WINTUN_LOG_INFO, L"Received IPv%d ICMP echo reply from %s to %s", IpVersion, Src, Dst);
+        Log(WINTUN_LOG_INFO, L"接收到来自 %s 到 %s 的 IPv%d ICMP 回显应答", Src, Dst, IpVersion);
     else
-        Log(WINTUN_LOG_INFO, L"Received IPv%d proto 0x%x packet from %s to %s", IpVersion, Proto, Src, Dst);
+        Log(WINTUN_LOG_INFO, L"接收到来自 %s 到 %s 的 IPv%d 协议 0x%x 数据包", Src, Dst, IpVersion, Proto);
 }
 
 static USHORT
@@ -215,6 +215,7 @@ IPChecksum(_In_reads_bytes_(Len) BYTE *Buffer, _In_ DWORD Len)
     return (USHORT)(~Sum);
 }
 
+
 static void
 MakeICMP(_Out_writes_bytes_all_(28) BYTE Packet[28])
 {
@@ -228,7 +229,7 @@ MakeICMP(_Out_writes_bytes_all_(28) BYTE Packet[28])
     *(USHORT *)&Packet[10] = IPChecksum(Packet, 20);
     Packet[20] = 8;
     *(USHORT *)&Packet[22] = IPChecksum(&Packet[20], 8);
-    Log(WINTUN_LOG_INFO, L"Sending IPv4 ICMP echo request to 10.6.7.8 from 10.6.7.7");
+    Log(WINTUN_LOG_INFO, L"发送 IPv4 ICMP 回显请求，从 10.6.7.7 到 10.6.7.8");
 }
 
 static DWORD WINAPI
@@ -256,7 +257,7 @@ ReceivePackets(_Inout_ DWORD_PTR SessionPtr)
                     continue;
                 return ERROR_SUCCESS;
             default:
-                LogError(L"Packet read failed", LastError);
+                LogError(L"数据包读取失败", LastError);
                 return LastError;
             }
         }
@@ -277,9 +278,9 @@ SendPackets(_Inout_ DWORD_PTR SessionPtr)
             WintunSendPacket(Session, Packet);
         }
         else if (GetLastError() != ERROR_BUFFER_OVERFLOW)
-            return LogLastError(L"Packet write failed");
+            return LogLastError(L"数据包写入失败");
 
-        switch (WaitForSingleObject(QuitEvent, 1000 /* 1 second */))
+        switch (WaitForSingleObject(QuitEvent, 1000 /* 1 秒 */))
         {
         case WAIT_ABANDONED:
         case WAIT_OBJECT_0:
@@ -293,64 +294,64 @@ int __cdecl main(void)
 {
     HMODULE Wintun = InitializeWintun();
     if (!Wintun)
-        return LogError(L"Failed to initialize Wintun", GetLastError());
+        return LogError(L"初始化 Wintun 失败", GetLastError());
     WintunSetLogger(ConsoleLogger);
-    Log(WINTUN_LOG_INFO, L"Wintun library loaded");
+    Log(WINTUN_LOG_INFO, L"加载 Wintun 库成功");
 
     DWORD LastError;
     HaveQuit = FALSE;
     QuitEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     if (!QuitEvent)
     {
-        LastError = LogError(L"Failed to create event", GetLastError());
+        LastError = LogError(L"创建事件失败", GetLastError());
         goto cleanupWintun;
     }
     if (!SetConsoleCtrlHandler(CtrlHandler, TRUE))
     {
-        LastError = LogError(L"Failed to set console handler", GetLastError());
+        LastError = LogError(L"设置控制台处理程序失败", GetLastError());
         goto cleanupQuit;
     }
 
     GUID ExampleGuid = { 0xdeadbabe, 0xcafe, 0xbeef, { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef } };
-    WINTUN_ADAPTER_HANDLE Adapter = WintunCreateAdapter(L"Demo", L"Example", &ExampleGuid);
+    WINTUN_ADAPTER_HANDLE Adapter = WintunCreateAdapter(L"演示", L"示例", &ExampleGuid);
     if (!Adapter)
     {
         LastError = GetLastError();
-        LogError(L"Failed to create adapter", LastError);
+        LogError(L"创建适配器失败", LastError);
         goto cleanupQuit;
     }
 
     DWORD Version = WintunGetRunningDriverVersion();
-    Log(WINTUN_LOG_INFO, L"Wintun v%u.%u loaded", (Version >> 16) & 0xff, (Version >> 0) & 0xff);
+    Log(WINTUN_LOG_INFO, L"Wintun v%u.%u 已加载", (Version >> 16) & 0xff, (Version >> 0) & 0xff);
 
     MIB_UNICASTIPADDRESS_ROW AddressRow;
     InitializeUnicastIpAddressEntry(&AddressRow);
     WintunGetAdapterLUID(Adapter, &AddressRow.InterfaceLuid);
     AddressRow.Address.Ipv4.sin_family = AF_INET;
     AddressRow.Address.Ipv4.sin_addr.S_un.S_addr = htonl((10 << 24) | (6 << 16) | (7 << 8) | (7 << 0)); /* 10.6.7.7 */
-    AddressRow.OnLinkPrefixLength = 24; /* This is a /24 network */
+    AddressRow.OnLinkPrefixLength = 24; /* 这是一个 /24 网络 */
     AddressRow.DadState = IpDadStatePreferred;
     LastError = CreateUnicastIpAddressEntry(&AddressRow);
     if (LastError != ERROR_SUCCESS && LastError != ERROR_OBJECT_ALREADY_EXISTS)
     {
-        LogError(L"Failed to set IP address", LastError);
+        LogError(L"设置 IP 地址失败", LastError);
         goto cleanupAdapter;
     }
 
     WINTUN_SESSION_HANDLE Session = WintunStartSession(Adapter, 0x400000);
     if (!Session)
     {
-        LastError = LogLastError(L"Failed to create adapter");
+        LastError = LogLastError(L"创建会话失败");
         goto cleanupAdapter;
     }
 
-    Log(WINTUN_LOG_INFO, L"Launching threads and mangling packets...");
+    Log(WINTUN_LOG_INFO, L"启动线程并处理数据包...");
 
     HANDLE Workers[] = { CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ReceivePackets, (LPVOID)Session, 0, NULL),
                          CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendPackets, (LPVOID)Session, 0, NULL) };
     if (!Workers[0] || !Workers[1])
     {
-        LastError = LogError(L"Failed to create threads", GetLastError());
+        LastError = LogError(L"创建线程失败", GetLastError());
         goto cleanupWorkers;
     }
     WaitForMultipleObjectsEx(_countof(Workers), Workers, TRUE, INFINITE, TRUE);

@@ -1,17 +1,17 @@
-# [Wintun Network Adapter](https://www.wintun.net/)
-### TUN Device Driver for Windows
+# [Wintun网络适配器](https://www.wintun.net/)
+### 用于Windows的TUN设备驱动程序
 
-This is a layer 3 TUN driver for Windows 7, 8, 8.1, 10, and 11. Originally created for [WireGuard](https://www.wireguard.com/), it is intended to be useful to a wide variety of projects that require layer 3 tunneling devices with implementations primarily in userspace.
+这是一个为Windows 7、8、8.1、10和11设计的第3层TUN驱动程序。最初为[WireGuard](https://www.wireguard.com/)创建，旨在为在用户空间主要实现的各种需要第3层隧道设备的项目提供帮助。
 
-## Installation
+## 安装
 
-Wintun is deployed as a platform-specific `wintun.dll` file. Install the `wintun.dll` file side-by-side with your application. Download the dll from [wintun.net](https://www.wintun.net/), alongside the header file for your application described below.
+Wintun作为特定于平台的 `wintun.dll` 文件进行部署。将 `wintun.dll` 文件与您的应用程序一起放置在同一目录下。从[wintun.net](https://www.wintun.net/)下载dll文件，以及下面描述的应用程序的头文件。
 
-## Usage
+## 使用
 
-Include the [`wintun.h` file](https://git.zx2c4.com/wintun/tree/api/wintun.h) in your project simply by copying it there and dynamically load the `wintun.dll` using [`LoadLibraryEx()`](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryexa) and [`GetProcAddress()`](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress) to resolve each function, using the typedefs provided in the header file. The [`InitializeWintun` function in the example.c code](https://git.zx2c4.com/wintun/tree/example/example.c) provides this in a function that you can simply copy and paste.
+通过简单地将[`wintun.h`文件](https://git.zx2c4.com/wintun/tree/api/wintun.h)复制到您的项目中并使用[`LoadLibraryEx()`](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryexa)和[`GetProcAddress()`](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress)来动态加载 `wintun.dll`，并使用头文件中提供的typedef来解析每个函数。 [example.c代码中的InitializeWintun函数](https://git.zx2c4.com/wintun/tree/example/example.c)提供了一个函数，您可以简单地复制和粘贴。
 
-With the library setup, Wintun can then be used by first creating an adapter, configuring it, and then setting its status to "up". Adapters have names (e.g. "OfficeNet") and types (e.g. "Wintun").
+设置好库之后，Wintun可以通过首先创建一个适配器，配置它，然后将其状态设置为“up”来使用。适配器具有名称（例如“OfficeNet”）和类型（例如“Wintun”）。
 
 ```C
 WINTUN_ADAPTER_HANDLE Adapter1 = WintunCreateAdapter(L"OfficeNet", L"Wintun", &SomeFixedGUID1);
@@ -19,13 +19,13 @@ WINTUN_ADAPTER_HANDLE Adapter2 = WintunCreateAdapter(L"HomeNet", L"Wintun", &Som
 WINTUN_ADAPTER_HANDLE Adapter3 = WintunCreateAdapter(L"Data Center", L"Wintun", &SomeFixedGUID3);
 ```
 
-After creating an adapter, we can use it by starting a session:
+创建适配器后，我们可以通过启动会话来使用它：
 
 ```C
 WINTUN_SESSION_HANDLE Session = WintunStartSession(Adapter2, 0x400000);
 ```
 
-Then, the `WintunAllocateSendPacket` and `WintunSendPacket` functions can be used for sending packets ([used by `SendPackets` in the example.c code](https://git.zx2c4.com/wintun/tree/example/example.c)):
+然后，`WintunAllocateSendPacket`和`WintunSendPacket`函数可用于发送数据包（[在example.c代码中使用`SendPackets`](https://git.zx2c4.com/wintun/tree/example/example.c)）：
 
 ```C
 BYTE *OutgoingPacket = WintunAllocateSendPacket(Session, PacketDataSize);
@@ -34,11 +34,11 @@ if (OutgoingPacket)
     memcpy(OutgoingPacket, PacketData, PacketDataSize);
     WintunSendPacket(Session, OutgoingPacket);
 }
-else if (GetLastError() != ERROR_BUFFER_OVERFLOW) // Silently drop packets if the ring is full
+else if (GetLastError() != ERROR_BUFFER_OVERFLOW) // 如果环形缓冲区已满，则悄悄丢弃数据包
     Log(L"Packet write failed");
 ```
 
-And the `WintunReceivePacket` and `WintunReleaseReceivePacket` functions can be used for receiving packets ([used by `ReceivePackets` in the example.c code](https://git.zx2c4.com/wintun/tree/example/example.c)):
+`WintunReceivePacket`和`WintunReleaseReceivePacket`函数可用于接收数据包（[在example.c代码中使用`ReceivePackets`](https://git.zx2c4.com/wintun/tree/example/example.c)）：
 
 ```C
 for (;;)
@@ -60,39 +60,39 @@ for (;;)
 }
 ```
 
-Some high performance use cases may want to spin on `WintunReceivePackets` for a number of cycles before falling back to waiting on the read-wait event.
+在某些高性能使用情况下，可能希望在转回等待读取等待事件之前，在`WintunReceivePackets`上旋转多个周期。
 
-You are **highly encouraged** to read the [**example.c short example**](https://git.zx2c4.com/wintun/tree/example/example.c) to see how to put together a simple userspace network tunnel.
+**强烈建议**阅读[**example.c简短示例**](https://git.zx2c4.com/wintun/tree/example/example.c)，了解如何组合一个简单的用户空间网络隧道。
 
-The various functions and definitions are [documented in the reference below](#Reference).
+下面的参考文档中记录了各种函数和定义。
 
-## Reference
+## 参考
 
-### Macro Definitions
+### 宏定义
 
 #### WINTUN\_MAX\_POOL
 
 `#define WINTUN_MAX_POOL   256`
 
-Maximum pool name length including zero terminator
+包括零终止符在内的最大池名称长度
 
 #### WINTUN\_MIN\_RING\_CAPACITY
 
 `#define WINTUN_MIN_RING_CAPACITY   0x20000 /* 128kiB */`
 
-Minimum ring capacity.
+最小环容量。
 
 #### WINTUN\_MAX\_RING\_CAPACITY
 
 `#define WINTUN_MAX_RING_CAPACITY   0x4000000 /* 64MiB */`
 
-Maximum ring capacity.
+最大环容量。
 
 #### WINTUN\_MAX\_IP\_PACKET\_SIZE
 
 `#define WINTUN_MAX_IP_PACKET_SIZE   0xFFFF`
 
-Maximum IP packet size
+最大IP数据包大小
 
 ### Typedefs
 
@@ -100,240 +100,240 @@ Maximum IP packet size
 
 `typedef void* WINTUN_ADAPTER_HANDLE`
 
-A handle representing Wintun adapter
+表示Wintun适配器的句柄
 
 #### WINTUN\_ENUM\_CALLBACK
 
 `typedef BOOL(* WINTUN_ENUM_CALLBACK) (WINTUN_ADAPTER_HANDLE Adapter, LPARAM Param)`
 
-Called by WintunEnumAdapters for each adapter in the pool.
+由WintunEnumAdapters为池中的每个适配器调用。
 
-**Parameters**
+**参数**
 
-- *Adapter*: Adapter handle, which will be freed when this function returns.
-- *Param*: An application-defined value passed to the WintunEnumAdapters.
+- *Adapter*：适配器句柄，在此函数返回时将被释放。
+- *Param*：传递给WintunEnumAdapters的应用程序定义的值。
 
-**Returns**
+**返回值**
 
-Non-zero to continue iterating adapters; zero to stop.
+非零以继续迭代适配器；零以停止。
 
 #### WINTUN\_LOGGER\_CALLBACK
 
 `typedef void(* WINTUN_LOGGER_CALLBACK) (WINTUN_LOGGER_LEVEL Level, DWORD64 Timestamp, const WCHAR *Message)`
 
-Called by internal logger to report diagnostic messages
+由内部记录器调用以报告诊断消息
 
-**Parameters**
+**参数**
 
-- *Level*: Message level.
-- *Timestamp*: Message timestamp in in 100ns intervals since 1601-01-01 UTC.
-- *Message*: Message text.
+- *Level*：消息级别。
+- *Timestamp*：自1601-01-01 UTC以来的100ns间隔的消息时间戳。
+- *Message*：消息文本。
 
 #### WINTUN\_SESSION\_HANDLE
 
 `typedef void* WINTUN_SESSION_HANDLE`
 
-A handle representing Wintun session
+表示Wintun会话的句柄
 
-### Enumeration Types
+### 枚举类型
 
 #### WINTUN\_LOGGER\_LEVEL
 
 `enum WINTUN_LOGGER_LEVEL`
 
-Determines the level of logging, passed to WINTUN\_LOGGER\_CALLBACK.
+确定记录级别，传递给WINTUN\_LOGGER\_CALLBACK。
 
-- *WINTUN\_LOG\_INFO*: Informational
-- *WINTUN\_LOG\_WARN*: Warning
-- *WINTUN\_LOG\_ERR*: Error
+- *WINTUN\_LOG\_INFO*：信息
+- *WINTUN\_LOG\_WARN*：警告
+- *WINTUN\_LOG\_ERR*：错误
 
-Enumerator
+枚举器
 
-### Functions
+### 函数
 
 #### WintunCreateAdapter()
 
 `WINTUN_ADAPTER_HANDLE WintunCreateAdapter (const WCHAR * Name, const WCHAR * TunnelType, const GUID * RequestedGUID)`
 
-Creates a new Wintun adapter.
+创建新的Wintun适配器。
 
-**Parameters**
+**参数**
 
-- *Name*: The requested name of the adapter. Zero-terminated string of up to MAX\_ADAPTER\_NAME-1 characters.
-- *Name*: Name of the adapter tunnel type. Zero-terminated string of up to MAX\_ADAPTER\_NAME-1 characters.
-- *RequestedGUID*: The GUID of the created network adapter, which then influences NLA generation deterministically. If it is set to NULL, the GUID is chosen by the system at random, and hence a new NLA entry is created for each new adapter. It is called "requested" GUID because the API it uses is completely undocumented, and so there could be minor interesting complications with its usage.
+- *Name*：适配器的请求名称。最多MAX\_ADAPTER\_NAME-1个字符的零终止字符串。
+- *TunnelType*：适配器隧道类型的名称。最多MAX\_ADAPTER\_NAME-1个字符的零终止字符串。
+- *RequestedGUID*：创建的网络适配器的GUID，然后以确定性地影响NLA生成。如果设置为NULL，则系统将随机选择GUID，因此每个新适配器都将创建一个新的NLA条目。它被称为“请求”GUID，因为它使用的API是完全未记录的，因此其使用可能会出现一些有趣的小问题。
 
-**Returns**
+**返回值**
 
-If the function succeeds, the return value is the adapter handle. Must be released with WintunCloseAdapter. If the function fails, the return value is NULL. To get extended error information, call GetLastError.
+如果函数成功，则返回值为适配器句柄。必须使用WintunCloseAdapter进行释放。如果函数失败，则返回值为NULL。要获取扩展的错误信息，请调用GetLastError。
 
 #### WintunOpenAdapter()
 
 `WINTUN_ADAPTER_HANDLE WintunOpenAdapter (const WCHAR * Name)`
 
-Opens an existing Wintun adapter.
+打开现有的Wintun适配器。
 
-**Parameters**
+**参数**
 
-- *Name*: The requested name of the adapter. Zero-terminated string of up to MAX\_ADAPTER\_NAME-1 characters.
+- *Name*：适配器的请求名称。最多MAX\_ADAPTER\_NAME-1个字符的零终止字符串。
 
-**Returns**
+**返回值**
 
-If the function succeeds, the return value is adapter handle. Must be released with WintunCloseAdapter. If the function fails, the return value is NULL. To get extended error information, call GetLastError.
+如果函数成功，则返回值为适配器句柄。必须使用WintunCloseAdapter进行释放。如果函数失败，则返回值为NULL。要获取扩展的错误信息，请调用GetLastError。
 
 #### WintunCloseAdapter()
 
 `void WintunCloseAdapter (WINTUN_ADAPTER_HANDLE Adapter)`
 
-Releases Wintun adapter resources and, if adapter was created with WintunCreateAdapter, removes adapter.
+释放Wintun适配器资源，并且如果适配器是使用WintunCreateAdapter创建的，则移除适配器。
 
-**Parameters**
+**参数**
 
-- *Adapter*: Adapter handle obtained with WintunCreateAdapter or WintunOpenAdapter.
+- *Adapter*：使用WintunCreateAdapter或WintunOpenAdapter获取的适配器句柄。
 
 #### WintunDeleteDriver()
 
-`BOOL WintunDeleteDriver ()`
+`BOOL WintunDeleteDriver()`
 
-Deletes the Wintun driver if there are no more adapters in use.
+如果没有更多的适配器在使用，则删除Wintun驱动程序。
 
-**Returns**
+**返回值**
 
-If the function succeeds, the return value is nonzero. If the function fails, the return value is zero. To get extended error information, call GetLastError.
+如果函数成功，返回值为非零。如果函数失败，返回值为零。要获取扩展的错误信息，请调用GetLastError。
 
 #### WintunGetAdapterLuid()
 
-`void WintunGetAdapterLuid (WINTUN_ADAPTER_HANDLE Adapter, NET_LUID * Luid)`
+`void WintunGetAdapterLuid(WINTUN_ADAPTER_HANDLE Adapter, NET_LUID *Luid)`
 
-Returns the LUID of the adapter.
+返回适配器的LUID。
 
-**Parameters**
+**参数**
 
-- *Adapter*: Adapter handle obtained with WintunOpenAdapter or WintunCreateAdapter
-- *Luid*: Pointer to LUID to receive adapter LUID.
+- *Adapter*：使用WintunOpenAdapter或WintunCreateAdapter获取的适配器句柄
+- *Luid*：指向LUID的指针，用于接收适配器的LUID。
 
 #### WintunGetRunningDriverVersion()
 
-`DWORD WintunGetRunningDriverVersion (void )`
+`DWORD WintunGetRunningDriverVersion(void)`
 
-Determines the version of the Wintun driver currently loaded.
+确定当前加载的Wintun驱动程序的版本。
 
-**Returns**
+**返回值**
 
-If the function succeeds, the return value is the version number. If the function fails, the return value is zero. To get extended error information, call GetLastError. Possible errors include the following: ERROR\_FILE\_NOT\_FOUND Wintun not loaded
+如果函数成功，返回值为版本号。如果函数失败，返回值为零。要获取扩展的错误信息，请调用GetLastError。可能的错误包括以下内容：ERROR\_FILE\_NOT\_FOUND Wintun未加载
 
 #### WintunSetLogger()
 
-`void WintunSetLogger (WINTUN_LOGGER_CALLBACK NewLogger)`
+`void WintunSetLogger(WINTUN_LOGGER_CALLBACK NewLogger)`
 
-Sets logger callback function.
+设置记录器回调函数。
 
-**Parameters**
+**参数**
 
-- *NewLogger*: Pointer to callback function to use as a new global logger. NewLogger may be called from various threads concurrently. Should the logging require serialization, you must handle serialization in NewLogger. Set to NULL to disable.
+- *NewLogger*：要用作新全局记录器的回调函数指针。NewLogger可能会同时从各种线程调用。如果记录需要序列化，则必须在NewLogger中处理序列化。设置为NULL以禁用。
 
 #### WintunStartSession()
 
-`WINTUN_SESSION_HANDLE WintunStartSession (WINTUN_ADAPTER_HANDLE Adapter, DWORD Capacity)`
+`WINTUN_SESSION_HANDLE WintunStartSession(WINTUN_ADAPTER_HANDLE Adapter, DWORD Capacity)`
 
-Starts Wintun session.
+启动Wintun会话。
 
-**Parameters**
+**参数**
 
-- *Adapter*: Adapter handle obtained with WintunOpenAdapter or WintunCreateAdapter
-- *Capacity*: Rings capacity. Must be between WINTUN\_MIN\_RING\_CAPACITY and WINTUN\_MAX\_RING\_CAPACITY (incl.) Must be a power of two.
+- *Adapter*：使用WintunOpenAdapter或WintunCreateAdapter获取的适配器句柄
+- *Capacity*：环容量。必须在WINTUN\_MIN\_RING\_CAPACITY和WINTUN\_MAX\_RING\_CAPACITY（包括）之间。必须是2的幂。
 
-**Returns**
+**返回值**
 
-Wintun session handle. Must be released with WintunEndSession. If the function fails, the return value is NULL. To get extended error information, call GetLastError.
+Wintun会话句柄。必须使用WintunEndSession进行释放。如果函数失败，返回值为NULL。要获取扩展的错误信息，请调用GetLastError。
 
 #### WintunEndSession()
 
-`void WintunEndSession (WINTUN_SESSION_HANDLE Session)`
+`void WintunEndSession(WINTUN_SESSION_HANDLE Session)`
 
-Ends Wintun session.
+结束Wintun会话。
 
-**Parameters**
+**参数**
 
-- *Session*: Wintun session handle obtained with WintunStartSession
+- *Session*：使用WintunStartSession获取的Wintun会话句柄
 
 #### WintunGetReadWaitEvent()
 
-`HANDLE WintunGetReadWaitEvent (WINTUN_SESSION_HANDLE Session)`
+`HANDLE WintunGetReadWaitEvent(WINTUN_SESSION_HANDLE Session)`
 
-Gets Wintun session's read-wait event handle.
+获取Wintun会话的读取等待事件句柄。
 
-**Parameters**
+**参数**
 
-- *Session*: Wintun session handle obtained with WintunStartSession
+- *Session*：使用WintunStartSession获取的Wintun会话句柄
 
-**Returns**
+**返回值**
 
-Pointer to receive event handle to wait for available data when reading. Should WintunReceivePackets return ERROR\_NO\_MORE\_ITEMS (after spinning on it for a while under heavy load), wait for this event to become signaled before retrying WintunReceivePackets. Do not call CloseHandle on this event - it is managed by the session.
+指针，用于在读取时等待可用数据的事件句柄。如果WintunReceivePackets返回ERROR\_NO\_MORE\_ITEMS（在重载下一段时间后），请在重试WintunReceivePackets之前等待此事件变为已发出。不要在此事件上调用CloseHandle - 它由会话管理。
 
 #### WintunReceivePacket()
 
-`BYTE* WintunReceivePacket (WINTUN_SESSION_HANDLE Session, DWORD * PacketSize)`
+`BYTE* WintunReceivePacket(WINTUN_SESSION_HANDLE Session, DWORD *PacketSize)`
 
-Retrieves one or packet. After the packet content is consumed, call WintunReleaseReceivePacket with Packet returned from this function to release internal buffer. This function is thread-safe.
+检索一个或一个数据包。在使用完数据包内容后，调用WintunReleaseReceivePacket以释放从此函数返回的数据包的内部缓冲区。此函数是线程安全的。
 
-**Parameters**
+**参数**
 
-- *Session*: Wintun session handle obtained with WintunStartSession
-- *PacketSize*: Pointer to receive packet size.
+- *Session*：使用WintunStartSession获取的Wintun会话句柄
+- *PacketSize*：指针，用于接收数据包大小。
 
-**Returns**
+**返回值**
 
-Pointer to layer 3 IPv4 or IPv6 packet. Client may modify its content at will. If the function fails, the return value is NULL. To get extended error information, call GetLastError. Possible errors include the following: ERROR\_HANDLE\_EOF Wintun adapter is terminating; ERROR\_NO\_MORE\_ITEMS Wintun buffer is exhausted; ERROR\_INVALID\_DATA Wintun buffer is corrupt
+指向第3层IPv4或IPv6数据包的指针。客户端可以随意修改其内容。如果函数失败，返回值为NULL。要获取扩展的错误信息，请调用GetLastError。可能的错误包括以下内容：ERROR\_HANDLE\_EOF Wintun适配器正在终止；ERROR\_NO\_MORE\_ITEMS Wintun缓冲区已耗尽；ERROR\_INVALID\_DATA Wintun缓冲区损坏
 
 #### WintunReleaseReceivePacket()
 
-`void WintunReleaseReceivePacket (WINTUN_SESSION_HANDLE Session, const BYTE * Packet)`
+`void WintunReleaseReceivePacket(WINTUN_SESSION_HANDLE Session, const BYTE *Packet)`
 
-Releases internal buffer after the received packet has been processed by the client. This function is thread-safe.
+在客户端处理接收到的数据包后释放内部缓冲区。此函数是线程安全的。
 
-**Parameters**
+**参数**
 
-- *Session*: Wintun session handle obtained with WintunStartSession
-- *Packet*: Packet obtained with WintunReceivePacket
+- *Session*：使用WintunStartSession获取的Wintun会话句柄
+- *Packet*：使用WintunReceivePacket获取的数据包
 
 #### WintunAllocateSendPacket()
 
-`BYTE* WintunAllocateSendPacket (WINTUN_SESSION_HANDLE Session, DWORD PacketSize)`
+`BYTE* WintunAllocateSendPacket(WINTUN_SESSION_HANDLE Session, DWORD PacketSize)`
 
-Allocates memory for a packet to send. After the memory is filled with packet data, call WintunSendPacket to send and release internal buffer. WintunAllocateSendPacket is thread-safe and the WintunAllocateSendPacket order of calls define the packet sending order.
+为要发送的数据包分配内存。在填充内存与数据包数据后，调用WintunSendPacket发送并释放内部缓冲区。WintunAllocateSendPacket是线程安全的，而WintunAllocateSendPacket的调用顺序定义了数据包的发送顺序。
 
-**Parameters**
+**参数**
 
-- *Session*: Wintun session handle obtained with WintunStartSession
-- *PacketSize*: Exact packet size. Must be less or equal to WINTUN\_MAX\_IP\_PACKET\_SIZE.
+- *Session*：使用WintunStartSession获取的Wintun会话句柄
+- *PacketSize*：确切的数据包大小。必须小于或等于WINTUN\_MAX\_IP\_PACKET\_SIZE。
 
-**Returns**
+**返回值**
 
-Returns pointer to memory where to prepare layer 3 IPv4 or IPv6 packet for sending. If the function fails, the return value is NULL. To get extended error information, call GetLastError. Possible errors include the following: ERROR\_HANDLE\_EOF Wintun adapter is terminating; ERROR\_BUFFER\_OVERFLOW Wintun buffer is full;
+返回指向内存的指针，用于准备第3层IPv4或IPv6数据包以便发送。如果函数失败，返回值为NULL。要获取扩展的错误信息，请调用GetLastError。可能的错误包括以下内容：ERROR\_HANDLE\_EOF Wintun适配器正在终止；ERROR\_BUFFER\_OVERFLOW Wintun缓冲区已满；
 
 #### WintunSendPacket()
 
-`void WintunSendPacket (WINTUN_SESSION_HANDLE Session, const BYTE * Packet)`
+`void WintunSendPacket(WINTUN_SESSION_HANDLE Session, const BYTE* Packet)`
 
-Sends the packet and releases internal buffer. WintunSendPacket is thread-safe, but the WintunAllocateSendPacket order of calls define the packet sending order. This means the packet is not guaranteed to be sent in the WintunSendPacket yet.
+发送数据包并释放内部缓冲区。WintunSendPacket是线程安全的，但是WintunAllocateSendPacket的调用顺序定义了数据包的发送顺序。这意味着数据包在调用WintunSendPacket时并不一定会被发送。
 
-**Parameters**
+**参数**
 
-- *Session*: Wintun session handle obtained with WintunStartSession
-- *Packet*: Packet obtained with WintunAllocateSendPacket
+- *Session*：使用WintunStartSession获取的Wintun会话句柄
+- *Packet*：使用WintunAllocateSendPacket获取的数据包
 
-## Building
+## 构建
 
-**Do not distribute drivers or files named "Wintun", as they will most certainly clash with official deployments. Instead distribute [`wintun.dll` as downloaded from wintun.net](https://www.wintun.net).**
+**不要分发名为"Wintun"的驱动程序或文件，因为它们很可能会与官方部署发生冲突。而是分发[`wintun.dll`从wintun.net下载](https://www.wintun.net)。**
 
-General requirements:
+一般要求：
 
-- [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/) with Windows SDK
+- [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)与Windows SDK
 - [Windows Driver Kit](https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk)
 
-`wintun.sln` may be opened in Visual Studio for development and building. Be sure to run `bcdedit /set testsigning on` and then reboot before to enable unsigned driver loading. The default run sequence (F5) in Visual Studio will build the example project and its dependencies.
+可以在Visual Studio中打开`wintun.sln`进行开发和构建。在启用未签名驱动程序加载之前，请确保运行`bcdedit /set testsigning on`然后重新启动。在Visual Studio中默认的运行序列（F5）将构建示例项目及其依赖项。
 
-## License
+## 许可证
 
-The entire contents of [the repository](https://git.zx2c4.com/wintun/), including all documentation and example code, is "Copyright © 2018-2021 WireGuard LLC. All Rights Reserved." Source code is licensed under the [GPLv2](COPYING). Prebuilt binaries from [wintun.net](https://www.wintun.net/) are released under a more permissive license suitable for more forms of software contained inside of the .zip files distributed there.
+整个[存储库](https://git.zx2c4.com/wintun/)的内容，包括所有文档和示例代码，均为"版权所有©2018-2021 WireGuard LLC。保留所有权利。"源代码根据[GPLv2](COPYING)许可。从[wintun.net](https://www.wintun.net/)预构建的二进制文件则以更宽松的许可证发布，适用于分发到.zip文件中的更多形式的软件内。
